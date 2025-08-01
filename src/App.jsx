@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Login from './Components/Main Components/Login';
 import Dashboard from './Components/Main Components/Dashboard';
 import { auth } from './firebaseConfig';
-
+import Certificates from './Components/Main Components/Certificates/Certificates';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -21,19 +21,14 @@ export default function App() {
   if (loading) return <div>Loading...</div>;
 
   return (
+    // In App.js
     <Routes>
-      <Route 
-        path="/login" 
-        element={user ? <Navigate to="/dashboard" /> : <Login />} 
-      />
-      <Route 
-        path="/dashboard/*" 
-        element={user ? <Dashboard /> : <Navigate to="/login" />} 
-      />
-      <Route 
-        path="/*" 
-        element={<Navigate to={user ? "/dashboard" : "/login"} />} 
-      />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+      <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />}>
+        <Route path="certificates" element={<Certificates />} />
+
+      </Route>
+      <Route path="/*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
   );
 }

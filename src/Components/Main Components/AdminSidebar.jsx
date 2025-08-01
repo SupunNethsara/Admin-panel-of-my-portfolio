@@ -12,12 +12,8 @@ import { Link } from 'react-router-dom';
 
 const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
   const menuItems = [
-    { path: "/", icon: <FiHome />, label: "Dashboard"},
-    { path: "/users", icon: <FiUsers />, label: "Users" },
-    { path: "/products", icon: <FiShoppingBag />, label: "Products" },
-    { path: "/orders", icon: <FiFileText />, label: "Orders" },
-    { path: "/analytics", icon: <FiPieChart />, label: "Analytics" },
-    { path: "/settings", icon: <FiSettings />, label: "Settings" },
+    
+      { path: "/dashboard/certificates", icon: <FiFileText />, label: "Certificates" },
   ];
 
   return (
@@ -56,7 +52,6 @@ const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
         </nav>
       </div>
 
-      {/* Sidebar Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
         <button className="flex items-center w-full px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
           <FiLogOut className="mr-3" />
