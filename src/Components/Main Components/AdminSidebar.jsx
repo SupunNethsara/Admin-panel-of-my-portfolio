@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 
 const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
   const menuItems = [
-    { path: "/", icon: <FiHome />, label: "Dashboard" },
+    { path: "/", icon: <FiHome />, label: "Dashboard"},
     { path: "/users", icon: <FiUsers />, label: "Users" },
     { path: "/products", icon: <FiShoppingBag />, label: "Products" },
     { path: "/orders", icon: <FiFileText />, label: "Orders" },
@@ -22,8 +22,7 @@ const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
 
   return (
     <div className={`fixed inset-y-0 left-0 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 z-30 transition-transform duration-300 ease-in-out bg-white shadow-lg w-64`}>
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+ <div className="flex items-center justify-between p-4 border-b border-gray-300">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
             A
@@ -38,7 +37,6 @@ const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
         </button>
       </div>
 
-      {/* Sidebar Content */}
       <div className="p-4 overflow-y-auto h-[calc(100vh-8rem)]">
         <nav className="space-y-1">
           {menuItems.map((item) => (
