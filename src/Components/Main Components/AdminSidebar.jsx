@@ -9,13 +9,23 @@ import {
   FiX
 } from "react-icons/fi";
 import { Link } from 'react-router-dom';
+import { auth } from "../../firebaseConfig";
+import { signOut } from "firebase/auth";
 
 const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
   const menuItems = [
     
       { path: "/dashboard/certificates", icon: <FiFileText />, label: "Certificates" },
+      {path:"licenseCertificate" , icon:<FiPieChart/>  , label:"License Ceritificate"}
   ];
-
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
+ window.location.href = "/login";
+  } catch (error) {
+    console.error("Logout failed", error);
+  }
+};
   return (
     <div className={`fixed inset-y-0 left-0 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 z-30 transition-transform duration-300 ease-in-out bg-white shadow-lg w-64`}>
  <div className="flex items-center justify-between p-4 border-b border-gray-300">
@@ -53,7 +63,7 @@ const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-        <button className="flex items-center w-full px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+        <button onClick={handleLogout} className="flex items-center w-full px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
           <FiLogOut className="mr-3" />
           <span>Logout</span>
         </button>

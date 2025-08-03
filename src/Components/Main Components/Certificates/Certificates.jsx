@@ -3,7 +3,6 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 import { uploadImage } from '../Cloudinaryapi';
 
-
 const Certificates = () => {
   const [formData, setFormData] = useState({
     title: '',
@@ -11,6 +10,7 @@ const Certificates = () => {
     date: '',
     icon: null,
     link: '',
+    credentialsId: '',
     iconPreview: '',
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -75,6 +75,7 @@ const Certificates = () => {
         date: formData.date || null,
         icon: iconUrl,
         link: formData.link || '#',
+        credentialsId: formData.credentialsId || null,
         createdAt: serverTimestamp()
       };
 
@@ -87,6 +88,7 @@ const Certificates = () => {
         date: '',
         icon: null,
         link: '',
+        credentialsId: '',
         iconPreview: '',
       });
     } catch (error) {
@@ -178,6 +180,20 @@ const Certificates = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
+            Credentials ID
+          </label>
+          <input
+            type="text"
+            name="credentialsId"
+            value={formData.credentialsId}
+            onChange={handleChange}
+            placeholder="Enter certificate ID or verification code"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Issuer Icon*
           </label>
           <div className="flex items-center space-x-4">
@@ -239,9 +255,3 @@ const Certificates = () => {
 };
 
 export default Certificates;
-
-
-
-
-
- 

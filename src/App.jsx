@@ -5,6 +5,7 @@ import Login from './Components/Main Components/Login';
 import Dashboard from './Components/Main Components/Dashboard';
 import { auth } from './firebaseConfig';
 import Certificates from './Components/Main Components/Certificates/Certificates';
+import LicenseCerificate from './Components/Main Components/Certificates/LicenseCerificate';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -26,7 +27,7 @@ export default function App() {
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />}>
         <Route path="certificates" element={<Certificates />} />
-
+        <Route path="licenseCertificate" element={<LicenseCerificate />} />
       </Route>
       <Route path="/*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
