@@ -16,7 +16,8 @@ const AdminSidebar = ({ isOpen, toggleSidebar, currentPath }) => {
   const menuItems = [
     
       { path: "/dashboard/certificates", icon: <FiFileText />, label: "Certificates" },
-      {path:"licenseCertificate" , icon:<FiPieChart/>  , label:"License Ceritificate"}
+      {path:"licenseCertificate" , icon:<FiPieChart/>  , label:"License Ceritificate"} ,
+      {path: "Projects", icon: <FiUsers />, label: "projects"},
   ];
 const handleLogout = async () => {
   try {

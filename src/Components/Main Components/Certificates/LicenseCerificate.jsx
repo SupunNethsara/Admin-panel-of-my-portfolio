@@ -11,6 +11,8 @@ const CertificateUploadForm = () => {
     credentialId: "",
     credentialUrl: "",
     file: null,
+    issuerIcon: null,
+    issuerIconPreview: null,
   });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -36,13 +38,36 @@ const CertificateUploadForm = () => {
     }
   };
 
+  const handleIconChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.match("image.*")) {
+      setErrorMessage("Only image files allowed for issuer icon");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage("Issuer icon must be under 2MB");
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setFormData({
+      ...formData,
+      issuerIcon: file,
+      issuerIconPreview: previewUrl,
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { certificateName, instituteName, issueDate, file } = formData;
+    const { certificateName, instituteName, issueDate, file, issuerIcon } = formData;
 
-    if (!certificateName || !instituteName || !issueDate || !file) {
-      setErrorMessage("Please fill all required fields and select a file.");
+    if (!certificateName || !instituteName || !issueDate || !file || !issuerIcon) {
+      setErrorMessage("Please fill all required fields and select files.");
       return;
     }
 
@@ -52,19 +77,28 @@ const CertificateUploadForm = () => {
     setUploadProgress(0);
 
     try {
-      const res = await uploadImage(
+      // Upload certificate file
+      const certRes = await uploadImage(
         file,
         "portfolio_certs",
         (progress) => setUploadProgress(progress)
       );
+      const fileUrl = certRes.data.secure_url;
 
-      const fileUrl = res.data.secure_url;
+    
+      const iconRes = await uploadImage(
+        issuerIcon,
+        "portfolio_certs",
+        (progress) => setUploadProgress(progress)
+      );
+      const iconUrl = iconRes.data.secure_url;
 
       await addDoc(collection(db, "Licensecertificates"), {
         title: certificateName,
         issuer: instituteName,
         date: issueDate,
         icon: fileUrl,
+        issuerIcon: iconUrl, 
         link: formData.credentialUrl || "#",
         credentialsId: formData.credentialId || "",
         createdAt: serverTimestamp(),
@@ -78,6 +112,8 @@ const CertificateUploadForm = () => {
         credentialId: "",
         credentialUrl: "",
         file: null,
+        issuerIcon: null,
+        issuerIconPreview: null,
       });
     } catch (err) {
       console.error(err);
@@ -165,7 +201,9 @@ const CertificateUploadForm = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Certificate File (PDF/Image)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Certificate File (PDF/Image)*
+          </label>
           <input
             type="file"
             name="file"
@@ -173,12 +211,50 @@ const CertificateUploadForm = () => {
             onChange={handleChange}
             className="mt-1 block w-full text-sm text-gray-800
               file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
+              file:rounded-md file:border-0
               file:text-sm file:font-semibold
               file:bg-blue-50 file:text-blue-700
               hover:file:bg-blue-100"
             required
           />
+          <p className="mt-1 text-xs text-gray-500">
+            PDF, PNG, or JPG (Max 2MB)
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Issuer Icon*
+          </label>
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <input
+                type="file"
+                name="issuerIcon"
+                accept="image/*"
+                onChange={handleIconChange}
+                className="block w-full text-sm text-gray-800
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-md file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                PNG, JPG, or SVG (Max 2MB)
+              </p>
+            </div>
+            {formData.issuerIconPreview && (
+              <div className="w-16 h-16 border rounded-md overflow-hidden">
+                <img 
+                  src={formData.issuerIconPreview} 
+                  alt="Issuer icon preview" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {isUploading && (

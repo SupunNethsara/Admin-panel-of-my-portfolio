@@ -6,6 +6,7 @@ import Dashboard from './Components/Main Components/Dashboard';
 import { auth } from './firebaseConfig';
 import Certificates from './Components/Main Components/Certificates/Certificates';
 import LicenseCerificate from './Components/Main Components/Certificates/LicenseCerificate';
+import ProjectUploadForm from './Components/Main Components/Projects/projectUploadForm';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />}>
         <Route path="certificates" element={<Certificates />} />
         <Route path="licenseCertificate" element={<LicenseCerificate />} />
+        <Route path="projects" element={<ProjectUploadForm/>} />
       </Route>
       <Route path="/*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
