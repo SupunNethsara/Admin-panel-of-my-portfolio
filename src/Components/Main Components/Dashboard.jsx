@@ -5,15 +5,22 @@ import AdminSidebar from "./AdminSidebar";
 
 const pageTitles = {
   '/dashboard/certificates': 'Certificates',
+  '/dashboard/certificates/add': 'Add Certificate',
   '/dashboard/licenseCertificate': 'License Certificates',
+  '/dashboard/licenseCertificate/add': 'Add License Certificate',
   '/dashboard/Projects': 'Projects',
+  '/dashboard/Projects/add': 'Add Project',
 };
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const pageTitle = pageTitles[location.pathname] || 'Dashboard';
+  const pageTitle = pageTitles[location.pathname]
+    || (location.pathname.startsWith('/dashboard/Projects/edit/') ? 'Edit Project'
+      : location.pathname.startsWith('/dashboard/certificates/edit/') ? 'Edit Certificate'
+      : location.pathname.startsWith('/dashboard/licenseCertificate/edit/') ? 'Edit License Certificate'
+      : 'Dashboard');
 
   return (
     <div className="min-h-screen bg-slate-50 flex">

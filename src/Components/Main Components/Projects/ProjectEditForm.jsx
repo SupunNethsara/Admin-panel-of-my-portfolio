@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
-import { FiCode, FiPlus, FiX, FiUpload, FiCheck, FiAlertCircle, FiGithub, FiExternalLink, FiArrowLeft } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FiCode, FiPlus, FiX, FiUpload, FiCheck, FiAlertCircle, FiGithub, FiExternalLink, FiArrowLeft, FiSave } from 'react-icons/fi';
 import { db } from '../../../firebaseConfig';
 import { uploadImage } from '../Cloudinaryapi';
 
-function ProjectUploadForm() {
+function ProjectEditForm() {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [formData, setFormData] = useState({
     projectName: '', visibility: 'public', createdDate: '', technologies: [],
     newTechnology: '', description: '', duration: '', projectType: 'full-stack',
@@ -21,6 +24,36 @@ function ProjectUploadForm() {
     'Postman', 'vite', 'Bootstrap', 'MySQL', 'Python', 'XD', 'Figma', 'Java',
     'Firebase', 'MongoDB', 'Express', 'HTML/CSS', 'Tailwind CSS', 'Redux', 'Laravel'
   ];
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'projects', id));
+        if (!docSnap.exists()) { setNotFound(true); return; }
+        const data = docSnap.data();
+        setFormData({
+          projectName: data.projectName || '',
+          visibility: data.visibility || 'public',
+          createdDate: data.createdDate || '',
+          technologies: data.technologies || [],
+          newTechnology: '',
+          description: data.description || '',
+          duration: data.duration || '',
+          projectType: data.projectType || 'full-stack',
+          companyProject: data.companyProject || false,
+          images: data.images || [],
+          githubUrl: data.githubUrl || '',
+          liveUrl: data.liveUrl || '',
+        });
+      } catch (err) {
+        console.error('Error fetching project:', err);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProject();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -75,22 +108,18 @@ function ProjectUploadForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitMessage('');
     try {
-      await addDoc(collection(db, 'projects'), {
-        ...formData,
-        createdAt: serverTimestamp(),
+      const { newTechnology, ...dataToSave } = formData;
+      await updateDoc(doc(db, 'projects', id), {
+        ...dataToSave,
         updatedAt: serverTimestamp()
       });
-      setSubmitMessage('Project uploaded successfully!');
-      setFormData({
-        projectName: '', visibility: 'public', createdDate: '', technologies: [],
-        newTechnology: '', description: '', duration: '', projectType: 'full-stack',
-        companyProject: false, images: [], githubUrl: '', liveUrl: ''
-      });
+      setSubmitMessage('Project updated successfully!');
       setTimeout(() => navigate('/dashboard/Projects'), 1200);
     } catch (error) {
-      console.error('Error adding project:', error);
-      setSubmitMessage('Failed to upload project');
+      console.error('Error updating project:', error);
+      setSubmitMessage('Failed to update project');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,8 +128,29 @@ function ProjectUploadForm() {
   const inputClass =
     'w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all';
 
-  const isSuccess = submitMessage.includes('success');
+  const isSuccess = submitMessage.includes('successfully');
   const customTechs = formData.technologies.filter(t => !technologyOptions.includes(t));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="max-w-3xl">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-16 text-center">
+          <p className="text-slate-500 font-medium mb-4">Project not found</p>
+          <button onClick={() => navigate('/dashboard/Projects')} className="text-indigo-600 text-sm font-medium hover:underline">
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl">
@@ -116,8 +166,8 @@ function ProjectUploadForm() {
           <FiCode className="text-white h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Add Project</h1>
-          <p className="text-sm text-slate-500">Showcase a new project in your portfolio</p>
+          <h1 className="text-xl font-bold text-slate-800">Edit Project</h1>
+          <p className="text-sm text-slate-500">Update project details</p>
         </div>
       </div>
 
@@ -127,9 +177,7 @@ function ProjectUploadForm() {
             ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
             : 'bg-red-50 border-red-200 text-red-600'
         }`}>
-          {isSuccess
-            ? <FiCheck className="h-4 w-4 shrink-0" />
-            : <FiAlertCircle className="h-4 w-4 shrink-0" />}
+          {isSuccess ? <FiCheck className="h-4 w-4 shrink-0" /> : <FiAlertCircle className="h-4 w-4 shrink-0" />}
           {submitMessage}
         </div>
       )}
@@ -239,7 +287,7 @@ function ProjectUploadForm() {
             <input
               type="text" placeholder="Add custom technology..."
               value={formData.newTechnology}
-              onChange={(e) => setFormData({ ...formData, newTechnology: e.target.value })}
+              onChange={(e) => setFormData(prev => ({ ...prev, newTechnology: e.target.value }))}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addNewTechnology())}
               className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"
             />
@@ -277,10 +325,28 @@ function ProjectUploadForm() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Project Images</p>
 
-          <label className="flex flex-col items-center justify-center gap-2 px-4 py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
-            <FiUpload className="h-6 w-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+          {formData.images.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {formData.images.map((img, index) => (
+                <div key={index} className="relative group aspect-video rounded-xl overflow-hidden">
+                  <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button" onClick={() => removeImage(index)}
+                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  >
+                    <FiX className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <label className="flex flex-col items-center justify-center gap-2 px-4 py-8 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+            <FiUpload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-500 group-hover:text-indigo-600">Click to upload images</p>
+              <p className="text-sm font-medium text-slate-500 group-hover:text-indigo-600">
+                {formData.images.length > 0 ? 'Add more images' : 'Click to upload images'}
+              </p>
               <p className="text-xs text-slate-400 mt-0.5">PNG, JPG, or WebP</p>
             </div>
             <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isSubmitting} />
@@ -300,35 +366,28 @@ function ProjectUploadForm() {
               </div>
             </div>
           )}
-
-          {formData.images.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
-              {formData.images.map((img, index) => (
-                <div key={index} className="relative group aspect-video rounded-xl overflow-hidden">
-                  <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button" onClick={() => removeImage(index)}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  >
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Submit */}
-        <button
-          type="submit" disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-        >
-          <FiCode className="h-4 w-4" />
-          {isSubmitting ? 'Uploading...' : 'Upload Project'}
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <button
+            type="submit" disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+          >
+            <FiSave className="h-4 w-4" />
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/Projects')}
+            className="px-5 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium rounded-xl transition-all text-sm border border-slate-200"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );
 }
 
-export default ProjectUploadForm;
+export default ProjectEditForm;

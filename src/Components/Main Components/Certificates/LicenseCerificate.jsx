@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { FiBookOpen, FiUpload, FiCheck, FiAlertCircle } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { FiBookOpen, FiUpload, FiCheck, FiAlertCircle, FiArrowLeft } from "react-icons/fi";
 import { db } from "../../../firebaseConfig";
 import { uploadImage } from "../Cloudinaryapi";
 
 const CertificateUploadForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     certificateName: "", instituteName: "", issueDate: "", credentialId: "",
     credentialUrl: "", file: null, issuerIcon: null, issuerIconPreview: null,
@@ -76,6 +78,7 @@ const CertificateUploadForm = () => {
         certificateName: "", instituteName: "", issueDate: "", credentialId: "",
         credentialUrl: "", file: null, issuerIcon: null, issuerIconPreview: null,
       });
+      setTimeout(() => navigate('/dashboard/licenseCertificate'), 1200);
     } catch (err) {
       console.error(err);
       setErrorMessage("Failed to upload certificate. Please try again.");
@@ -91,6 +94,9 @@ const CertificateUploadForm = () => {
     <div className="max-w-3xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
+        <button onClick={() => navigate('/dashboard/licenseCertificate')} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
+          <FiArrowLeft className="h-5 w-5" />
+        </button>
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
           <FiBookOpen className="text-white h-5 w-5" />
         </div>

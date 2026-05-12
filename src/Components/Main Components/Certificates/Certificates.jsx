@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { FiAward, FiUpload, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiAward, FiUpload, FiCheck, FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
 import { db } from '../../../firebaseConfig';
 import { uploadImage } from '../Cloudinaryapi';
 
 const Certificates = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '', issuer: '', date: '', icon: null, link: '', credentialsId: '', iconPreview: '',
   });
@@ -57,6 +59,7 @@ const Certificates = () => {
       });
       setSuccessMessage('Certificate added successfully!');
       setFormData({ title: '', issuer: '', date: '', icon: null, link: '', credentialsId: '', iconPreview: '' });
+      setTimeout(() => navigate('/dashboard/certificates'), 1200);
     } catch (error) {
       setErrorMessage(error.response?.data?.error?.message || 'Failed to add certificate. Please try again.');
     } finally {
@@ -71,6 +74,9 @@ const Certificates = () => {
     <div className="max-w-3xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
+        <button onClick={() => navigate('/dashboard/certificates')} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
+          <FiArrowLeft className="h-5 w-5" />
+        </button>
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
           <FiAward className="text-white h-5 w-5" />
         </div>
