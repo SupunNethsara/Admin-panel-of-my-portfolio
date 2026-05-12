@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { FiAward, FiUpload, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { db } from '../../../firebaseConfig';
 import { uploadImage } from '../Cloudinaryapi';
 
 const Certificates = () => {
   const [formData, setFormData] = useState({
-    title: '',
-    issuer: '',
-    date: '',
-    icon: null,
-    link: '',
-    credentialsId: '',
-    iconPreview: '',
+    title: '', issuer: '', date: '', icon: null, link: '', credentialsId: '', iconPreview: '',
   });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -20,10 +15,7 @@ const Certificates = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
@@ -37,219 +29,168 @@ const Certificates = () => {
         setErrorMessage('File size should be less than 2MB');
         return;
       }
-      
-      setFormData(prev => ({
-        ...prev,
-        icon: file,
-        iconPreview: URL.createObjectURL(file)
-      }));
+      setFormData(prev => ({ ...prev, icon: file, iconPreview: URL.createObjectURL(file) }));
       setErrorMessage('');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.title || !formData.issuer || !formData.icon) {
       setErrorMessage('Title, issuer, and icon are required');
       return;
     }
-
     setIsUploading(true);
     setErrorMessage('');
     setSuccessMessage('');
     setUploadProgress(0);
-
     try {
-      const response = await uploadImage(
-        formData.icon,
-        'portfolio_certs',
-        (progress) => setUploadProgress(progress)
-      );
-      
-      const iconUrl = response.data.secure_url;
-
-      const certificateData = {
+      const response = await uploadImage(formData.icon, 'portfolio_certs', (p) => setUploadProgress(p));
+      await addDoc(collection(db, 'certificates'), {
         title: formData.title,
         issuer: formData.issuer,
         date: formData.date || null,
-        icon: iconUrl,
+        icon: response.data.secure_url,
         link: formData.link || '#',
         credentialsId: formData.credentialsId || null,
-        createdAt: serverTimestamp()
-      };
-
-      await addDoc(collection(db, 'certificates'), certificateData);
-      
-      setSuccessMessage('Certificate added successfully!');
-      setFormData({
-        title: '',
-        issuer: '',
-        date: '',
-        icon: null,
-        link: '',
-        credentialsId: '',
-        iconPreview: '',
+        createdAt: serverTimestamp(),
       });
+      setSuccessMessage('Certificate added successfully!');
+      setFormData({ title: '', issuer: '', date: '', icon: null, link: '', credentialsId: '', iconPreview: '' });
     } catch (error) {
-      console.error('Error adding certificate:', error);
       setErrorMessage(error.response?.data?.error?.message || 'Failed to add certificate. Please try again.');
     } finally {
       setIsUploading(false);
     }
   };
 
+  const inputClass =
+    'w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all';
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Add New Certificate</h1>
-      
+    <div className="max-w-3xl">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <FiAward className="text-white h-5 w-5" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Add Certificate</h1>
+          <p className="text-sm text-slate-500">Upload a new skill certificate to your portfolio</p>
+        </div>
+      </div>
+
       {successMessage && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+        <div className="mb-5 flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm">
+          <FiCheck className="h-4 w-4 shrink-0" />
           {successMessage}
         </div>
       )}
-      
       {errorMessage && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        <div className="mb-5 flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+          <FiAlertCircle className="h-4 w-4 shrink-0" />
           {errorMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Certificate Title*
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              placeholder="React (Basic)"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Issuer*
-            </label>
-            <input
-              type="text"
-              name="issuer"
-              value={formData.issuer}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              placeholder="HackerRank"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Issue Date
-            </label>
-            <input
-              type="text"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              placeholder="Issued Jun 2025"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Certificate Link
-            </label>
-            <input
-              type="url"
-              name="link"
-              value={formData.link}
-              onChange={handleChange}
-              placeholder="https://example.com/certificate"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Credentials ID
-          </label>
-          <input
-            type="text"
-            name="credentialsId"
-            value={formData.credentialsId}
-            onChange={handleChange}
-            placeholder="Enter certificate ID or verification code"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Issuer Icon*
-          </label>
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Certificate Title <span className="text-red-400">*</span>
+              </label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100"
-                required
+                type="text" name="title" value={formData.title} onChange={handleChange}
+                required placeholder="React (Basic)" className={inputClass}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                PNG, JPG, or SVG (Max 2MB)
-              </p>
             </div>
-            {formData.iconPreview && (
-              <div className="w-16 h-16 border rounded-md overflow-hidden">
-                <img 
-                  src={formData.iconPreview} 
-                  alt="Preview" 
-                  className="w-full h-full object-contain"
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Issuer <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text" name="issuer" value={formData.issuer} onChange={handleChange}
+                required placeholder="HackerRank" className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Issue Date</label>
+              <input
+                type="text" name="date" value={formData.date} onChange={handleChange}
+                placeholder="Issued Jun 2025" className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Certificate Link</label>
+              <input
+                type="url" name="link" value={formData.link} onChange={handleChange}
+                placeholder="https://example.com/certificate" className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Credentials ID</label>
+            <input
+              type="text" name="credentialsId" value={formData.credentialsId} onChange={handleChange}
+              placeholder="Enter certificate ID or verification code" className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Issuer Icon <span className="text-red-400">*</span>
+            </label>
+            <div className="flex items-center gap-4">
+              <label className="flex-1 flex items-center gap-3 px-4 py-3 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+                <FiUpload className="h-4 w-4 text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-500 group-hover:text-indigo-600 truncate">
+                    {formData.icon ? formData.icon.name : 'Click to upload icon'}
+                  </p>
+                  <p className="text-xs text-slate-400">PNG, JPG, or SVG (Max 2MB)</p>
+                </div>
+                <input type="file" accept="image/*" onChange={handleFileChange} required className="hidden" />
+              </label>
+              {formData.iconPreview && (
+                <div className="w-14 h-14 border border-slate-200 rounded-xl overflow-hidden shrink-0 bg-white shadow-sm">
+                  <img src={formData.iconPreview} alt="Preview" className="w-full h-full object-contain p-1" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isUploading && (
+            <div>
+              <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+                <span>Uploading...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-indigo-500 to-violet-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-            )}
-          </div>
-        </div>
-
-        <div className="pt-4">
-          <button
-            type="submit"
-            disabled={isUploading}
-            className={`px-4 py-2 rounded-md text-white font-medium ${isUploading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-          >
-            {isUploading ? 'Uploading...' : 'Add Certificate'}
-          </button>
-        </div>
-
-        {isUploading && (
-          <div className="pt-2">
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full" 
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Uploading: {uploadProgress}% complete
-            </p>
+          )}
+
+          <div className="pt-1">
+            <button
+              type="submit"
+              disabled={isUploading}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+            >
+              <FiAward className="h-4 w-4" />
+              {isUploading ? 'Uploading...' : 'Add Certificate'}
+            </button>
           </div>
-        )}
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
