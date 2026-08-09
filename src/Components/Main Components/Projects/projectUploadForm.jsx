@@ -10,7 +10,7 @@ function ProjectUploadForm() {
   const [formData, setFormData] = useState({
     projectName: '', visibility: 'public', createdDate: '', technologies: [],
     newTechnology: '', description: '', duration: '', projectType: 'full-stack',
-    companyProject: false, images: [], githubUrl: '', liveUrl: ''
+    companyProject: false, images: [], mainImage: '', githubUrl: '', liveUrl: ''
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +58,15 @@ function ProjectUploadForm() {
         })
       );
       const results = await Promise.all(uploadPromises);
-      setFormData(prev => ({ ...prev, images: [...prev.images, ...results.map(r => r.data.secure_url)] }));
+      const uploadedUrls = results.map(r => r.data.secure_url);
+      setFormData(prev => {
+        const newImages = [...prev.images, ...uploadedUrls];
+        return {
+          ...prev,
+          images: newImages,
+          mainImage: prev.mainImage || newImages[0] || ''
+        };
+      });
       setSubmitMessage('Images uploaded successfully!');
     } catch (error) {
       console.error('Image upload error:', error);
@@ -68,16 +76,31 @@ function ProjectUploadForm() {
     }
   };
 
+  const setAsMainImage = (imgUrl) => {
+    setFormData(prev => ({ ...prev, mainImage: imgUrl }));
+  };
+
   const removeImage = (index) => {
-    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+    setFormData(prev => {
+      const removedUrl = prev.images[index];
+      const updatedImages = prev.images.filter((_, i) => i !== index);
+      let updatedMain = prev.mainImage;
+      if (removedUrl === prev.mainImage) {
+        updatedMain = updatedImages[0] || '';
+      }
+      return { ...prev, images: updatedImages, mainImage: updatedMain };
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const finalMainImage = formData.mainImage || (formData.images.length > 0 ? formData.images[0] : '');
+      const { newTechnology, ...dataToSave } = formData;
       await addDoc(collection(db, 'projects'), {
-        ...formData,
+        ...dataToSave,
+        mainImage: finalMainImage,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -85,7 +108,7 @@ function ProjectUploadForm() {
       setFormData({
         projectName: '', visibility: 'public', createdDate: '', technologies: [],
         newTechnology: '', description: '', duration: '', projectType: 'full-stack',
-        companyProject: false, images: [], githubUrl: '', liveUrl: ''
+        companyProject: false, images: [], mainImage: '', githubUrl: '', liveUrl: ''
       });
       setTimeout(() => navigate('/dashboard/Projects'), 1200);
     } catch (error) {
@@ -302,18 +325,46 @@ function ProjectUploadForm() {
           )}
 
           {formData.images.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
-              {formData.images.map((img, index) => (
-                <div key={index} className="relative group aspect-video rounded-xl overflow-hidden">
-                  <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button" onClick={() => removeImage(index)}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  >
-                    <FiX className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+            <div className="space-y-2">
+              <p className="text-xs text-slate-500 font-medium">
+                Click "★ Set Cover" to choose the main preview image for the portfolio grid.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {formData.images.map((img, index) => {
+                  const isMain = formData.mainImage === img || (!formData.mainImage && index === 0);
+                  return (
+                    <div
+                      key={index}
+                      className={`relative group aspect-video rounded-xl overflow-hidden border-2 transition-all ${
+                        isMain ? "border-amber-400 ring-2 ring-amber-400/30" : "border-transparent"
+                      }`}
+                    >
+                      <img src={img} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                      
+                      {/* Delete Button */}
+                      <button
+                        type="button" onClick={() => removeImage(index)}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                      >
+                        <FiX className="h-3 w-3" />
+                      </button>
+
+                      {/* Cover Badge / Selector Button */}
+                      <button
+                        type="button"
+                        onClick={() => setAsMainImage(img)}
+                        className={`absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all shadow-md ${
+                          isMain
+                            ? "bg-amber-400 text-slate-900 opacity-100"
+                            : "bg-slate-900/80 text-white opacity-80 group-hover:opacity-100 hover:bg-indigo-600"
+                        }`}
+                      >
+                        {isMain ? "★ Cover Image" : "Set Cover"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
